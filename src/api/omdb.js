@@ -1,5 +1,5 @@
 const BASE_URL = 'https://www.omdbapi.com/';
-const API_KEY = import.meta.env.VITE_OMDB_API_KEY || '';
+const API_KEY = import.meta.env.VITE_OMDB_API_KEY || '2d7eccc4';
 
 async function callOmdb(params) {
   const qs = new URLSearchParams({ apikey: API_KEY, ...params }).toString();
