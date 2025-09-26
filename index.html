@@ -1,19 +1,44 @@
 <!doctype html>
 <html lang="en">
   <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Movie Search</title>
-
-  <!-- Temporary dev-only Tailwind: Play CDN injects Tailwind utilities -->
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Movie Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
 
   <body>
-    <!-- quick test element (should be styled if Tailwind CDN loads) -->
-    <div class="m-6 p-6 bg-red-500 text-white rounded">Movie Searchs</div>
+    <div class="m-6 p-6 bg-red-500 text-white rounded">Movie Search</div>
+
+    <!-- Simple Search Bar -->
+    <div class="m-6">
+      <form id="movie-search-form" class="flex gap-2">
+        <input 
+          type="text" 
+          id="movie-search-input" 
+          placeholder="Search for a movie..." 
+          class="border border-gray-300 rounded px-4 py-2 flex-1"
+        />
+        <button 
+          type="submit" 
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Search
+        </button>
+      </form>
+    </div>
 
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+
+    <script>
+      // Temporary JS to see the search in action
+      const form = document.getElementById('movie-search-form');
+      const input = document.getElementById('movie-search-input');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Searching for: ' + input.value);
+      });
+    </script>
   </body>
 </html>

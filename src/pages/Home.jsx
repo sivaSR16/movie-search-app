@@ -1,91 +1,94 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { searchMovies } from '../api/omdb';
-import SearchBar from '../components/SearchBar';
-import MovieGrid from '../components/MovieGrid';
-import Pagination from '../components/Pagination';
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Home() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const qParam = params.get('q') || '';
-  const typeParam = params.get('type') || '';
-  const pageParam = Number(params.get('page') || '1');
-
-  const [query, setQuery] = useState(qParam);
-  const [type, setType] = useState(typeParam);
-  const [page, setPage] = useState(pageParam);
-  const [results, setResults] = useState([]);
-  const [totalResults, setTotalResults] = useState(0);
+  const [query, setQuery] = useState("");
+  const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  useEffect(()=> {
-    const sp = new URLSearchParams();
-    if (query) sp.set('q', query);
-    if (type) sp.set('type', type);
-    if (page) sp.set('page', String(page));
-    navigate({ pathname: '/', search: sp.toString() }, { replace: true });
-  }, [query, type, page, navigate]);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query) return;
 
-  const doSearch = useCallback(async (q, p = 1, t = type) => {
-    setError(''); setLoading(true);
+    setLoading(true);
+    setError("");
+    setMovies([]);
+
     try {
-      const res = await searchMovies({ query: q, page: p, type: t });
-      if (res.Response === 'False') {
-        setResults([]); setTotalResults(0); setError(res.Error || 'No results');
+      const apiKey = import.meta.env.VITE_OMDB_API_KEY;
+      const res = await fetch(
+        `https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(
+          query
+        )}`
+      );
+      const data = await res.json();
+
+      if (data.Response === "True") {
+        setMovies(data.Search);
       } else {
-        setResults(res.Search || []); setTotalResults(res.totalResults || 0);
+        setError(data.Error || "No movies found");
       }
-    } catch (e) {
-      setError('Something went wrong. Please try again.');
-      setResults([]); setTotalResults(0);
+    } catch (err) {
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
-  }, [type]);
-
-  // run initial search if URL has query
-  useEffect(()=> {
-    if (qParam) doSearch(qParam, pageParam, typeParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleSearch = (q) => {
-    setQuery(q);
-    setPage(1);
-    doSearch(q, 1, type);
-  };
-
-  const handleTypeChange = (t) => {
-    setType(t);
-    if (query) { setPage(1); doSearch(query, 1, t); }
-  };
-
-  const handlePageChange = (p) => {
-    setPage(p);
-    doSearch(query, p, type);
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Movie Search</h1>
-        <Link to="/favorites" className="text-blue-600">Favorites</Link>
-      </header>
+    <div className="p-6 flex flex-col items-center">
+      <h1 className="text-3xl font-bold mb-6">Movie Search</h1>
 
-      <SearchBar initialQuery={query} onSearch={handleSearch} type={type} setType={handleTypeChange} />
+      <form
+        onSubmit={handleSearch}
+        className="flex space-x-2 w-full max-w-md mb-6"
+      >
+        <input
+          type="text"
+          placeholder="Search movies..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="flex-1 p-3 border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          className="p-3 bg-blue-500 text-white rounded shadow hover:bg-blue-600"
+        >
+          Search
+        </button>
+      </form>
 
-      <div className="mt-6">
-        {loading && <p>Loading...</p>}
-        {error && <p className="text-red-600">{error}</p>}
-        {!loading && !error && (
-          <>
-            <MovieGrid movies={results} />
-            <Pagination currentPage={page} totalResults={totalResults} onPageChange={handlePageChange} />
-          </>
-        )}
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6 w-full max-w-5xl">
+        {movies.map((movie) => (
+          <div
+            key={movie.imdbID}
+            className="border rounded shadow hover:shadow-lg overflow-hidden"
+          >
+            <img
+              src={
+                movie.Poster !== "N/A"
+                  ? movie.Poster
+                  : "https://via.placeholder.com/300x450?text=No+Image"
+              }
+              alt={movie.Title}
+              className="w-full h-72 object-cover"
+            />
+            <div className="p-3">
+              <h2 className="font-bold text-lg">{movie.Title}</h2>
+              <p className="text-gray-600">{movie.Year}</p>
+              <Link
+                to={`/movie/${movie.imdbID}`}
+                className="text-blue-500 mt-2 inline-block"
+              >
+                Details
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
